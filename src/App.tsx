@@ -14,7 +14,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const { data: signer } = useSigner();
 
-  const handleSubmit = (event:any) => {
+  const handleSubmit = async (event:any) => {
     event.preventDefault();
     setLoading(true);
     const nonce = new Date().getTime();
@@ -23,24 +23,23 @@ function App() {
         Date: ${date?.toUTCString() as string}
         Nonce: ${nonce}
     `
-    const signature = signer?.signMessage(message);
-    console.log(signature);
-    fetch('/api/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ signature })
-    })
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        setLoading(false);
+    const signature = await signer?.signMessage(message);
+    if (signature) {
+      fetch('/api/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ signature })
       })
-      .catch(error => {
-        console.error(error);
-        setLoading(false);
-      });
+        .then(response => response.json())
+        .then(data => {
+          setLoading(false);
+        })
+        .catch(error => {
+          setLoading(false);
+        });
+    }
   };
 
   return (
