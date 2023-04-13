@@ -12,25 +12,24 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 function App() {
   const [date, setDate] = useState<Date | null>(new Date());
   const [loading, setLoading] = useState(false);
+  const [isDone, setDone] = useState(false);
+  const [links, setLinks] = useState<any[] | null>([]);
   const { data: signer } = useSigner();
 
   const handleSubmit = async (event:any) => {
     event.preventDefault();
     setLoading(true);
-    const nonce = new Date().getTime();
-    const message = `
-      Message: 
-        Date: ${date?.toUTCString() as string}
-        Nonce: ${nonce}
-    `
+    const nonce = 1;
+    const message = `Date: ${date?.getTime()}\nNonce: ${nonce}`
     const signature = await signer?.signMessage(message);
-    if (signature) {
+    console.log(message);
+    if (signature && message) {
       fetch('/api/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ signature })
+        body: JSON.stringify({ signature, message })
       })
         .then(response => response.json())
         .then(data => {
@@ -38,9 +37,36 @@ function App() {
         })
         .catch(error => {
           setLoading(false);
+          throw error;
         });
     }
   };
+
+  const handleGet = async (event: any) => {
+    event.preventDefault();
+    const address = await signer?.getAddress();
+    console.log(address);
+    if (address) {
+      fetch('/api/get-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ address })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data) {
+            setDone(true);
+            setLinks(data.data);
+          }
+        })
+        .catch(error => {
+          setLoading(false);
+          throw error;
+        });
+    }
+  }
 
   return (
     <div className='App'>
@@ -52,9 +78,35 @@ function App() {
           <span>Date: {date?.toDateString()}</span>
           <span>Time: {date?.toTimeString()}</span>
         </div>
-        {/* <Calendar onClickDay={value => setDate(value)} minDate={new Date()} /> */}
         <DateTimePicker minDate={new Date()} onChange={value => setDate(value)}  value={date} />
         <button onClick={handleSubmit} type="submit" disabled={loading}>{ loading ? "Loading..." : "Submit" }</button>
+      </div>
+      <div className='results'>
+        <button className='get-btn' onClick={handleGet}>
+          Get link download
+        </button>
+        {isDone && links?.length !== 0 ? (
+          <div className='links'>
+            <table>
+              <thead>
+                <tr>
+                  <th>Datetime</th>
+                  <th>Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {links?.map(link => (
+                  <tr key={link.name}>
+                    <td>{new Date(parseInt(link.name)).toUTCString()}</td>
+                    <td><a href={link.link} target='_blank' rel="noreferrer">{link.link}</a></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className='links'>The file is not ready!</div>
+        )}
       </div>
     </div>
   );
