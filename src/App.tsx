@@ -9,7 +9,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 
 function App() {
-  const urlAPI: string | undefined = process.env.REACT_APP_API_URL || 'http://localhost:5000' ;
+  const urlAPI: string | undefined = process.env.REACT_APP_API_URL;
   const submitEndpoint = "/api/submit";
   const getLinkEndpoint = "/api/get-link";
   const [date, setDate] = useState<Date | null>(new Date());
