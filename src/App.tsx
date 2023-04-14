@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// import Calendar from 'react-calendar';
 import './App.css';
 import { useSigner } from 'wagmi';
 import 'react-clock/dist/Clock.css';
@@ -10,6 +9,9 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 
 function App() {
+  const apiURL = process.env.API;
+  const submitEndpoint = '/api/submit';
+  const getLinkEndpoint = '/api/get-links';
   const [date, setDate] = useState<Date | null>(new Date());
   const [loading, setLoading] = useState(false);
   const [isDone, setDone] = useState(false);
@@ -19,12 +21,20 @@ function App() {
   const handleSubmit = async (event:any) => {
     event.preventDefault();
     setLoading(true);
-    const nonce = 1;
-    const message = `Date: ${date?.getTime()}\nNonce: ${nonce}`
-    const signature = await signer?.signMessage(message);
-    console.log(message);
+    const nonce = Math.floor(Math.random() * 10000);
+    const message = `Date: ${date?.getTime()}\nNonce: ${nonce}`;
+    let signature: string | undefined = "";
+    if (!signer) {
+      alert("Please connect wallet to submit");
+      setLoading(false);
+    }
+    try {
+      signature = await signer?.signMessage(message);
+    } catch (error) {
+      setLoading(false);
+    }
     if (signature && message) {
-      fetch('/api/submit', {
+      fetch(`${apiURL}${submitEndpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -44,10 +54,13 @@ function App() {
 
   const handleGet = async (event: any) => {
     event.preventDefault();
+    if (!signer) {
+      alert("Please connect wallet to get file links");
+      setLoading(false);
+    }
     const address = await signer?.getAddress();
-    console.log(address);
     if (address) {
-      fetch('/api/get-link', {
+      fetch(`${apiURL}${getLinkEndpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -56,10 +69,8 @@ function App() {
       })
         .then(response => response.json())
         .then(data => {
-          if (data) {
-            setDone(true);
-            setLinks(data.data);
-          }
+          setDone(true);
+          setLinks(data.data);
         })
         .catch(error => {
           setLoading(false);
