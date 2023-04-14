@@ -9,15 +9,14 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 
 function App() {
-  const apiURL = process.env.API;
-  const submitEndpoint = '/api/submit';
-  const getLinkEndpoint = '/api/get-links';
+  const urlAPI: string | undefined = process.env.REACT_APP_API_URL || 'http://localhost:5000' ;
+  const submitEndpoint = "/api/submit";
+  const getLinkEndpoint = "/api/get-link";
   const [date, setDate] = useState<Date | null>(new Date());
   const [loading, setLoading] = useState(false);
   const [isDone, setDone] = useState(false);
   const [links, setLinks] = useState<any[] | null>([]);
   const { data: signer } = useSigner();
-
   const handleSubmit = async (event:any) => {
     event.preventDefault();
     setLoading(true);
@@ -34,7 +33,7 @@ function App() {
       setLoading(false);
     }
     if (signature && message) {
-      fetch(`${apiURL}${submitEndpoint}`, {
+      fetch(`${urlAPI}${submitEndpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -60,7 +59,7 @@ function App() {
     }
     const address = await signer?.getAddress();
     if (address) {
-      fetch(`${apiURL}${getLinkEndpoint}`, {
+      fetch(`${urlAPI}${getLinkEndpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -108,7 +107,7 @@ function App() {
               <tbody>
                 {links?.map(link => (
                   <tr key={link.name}>
-                    <td>{new Date(parseInt(link.name)).toUTCString()}</td>
+                    <td>{new Date(parseInt(link.name)).toLocaleString()}</td>
                     <td><a href={link.link} target='_blank' rel="noreferrer">{link.link}</a></td>
                   </tr>
                 ))}
